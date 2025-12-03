@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
+const Product = require('../models/Product');
+router.get('/', async (req,res)=>{ const q = req.query.q || ''; const sort = req.query.sort || 'new'; let products = await Product.find({title: new RegExp(q,'i')}); if(sort==='price_asc') products = products.sort((a,b)=>a.price-b.price); else if(sort==='price_desc') products = products.sort((a,b)=>b.price-a.price); res.json(products); });
+router.get('/:id', async (req,res)=>{ const p = await Product.findById(req.params.id); if(!p) return res.status(404).json({msg:'Not found'}); res.json(p); });
+router.post('/', auth, admin, async (req,res)=>{ const prod = new Product(req.body); await prod.save(); res.json(prod); });
+router.put('/:id', auth, admin, async (req,res)=>{ const p = await Product.findByIdAndUpdate(req.params.id, req.body, {new:true}); res.json(p); });
+router.delete('/:id', auth, admin, async (req,res)=>{ await Product.findByIdAndDelete(req.params.id); res.json({msg:'Deleted'}); });
+module.exports = router;
